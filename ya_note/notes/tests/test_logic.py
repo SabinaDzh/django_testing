@@ -13,7 +13,6 @@ User = get_user_model()
 
 class TestNoteCreation(TestCase):
 
-
     @classmethod
     def setUpTestData(cls):
         cls.author = User.objects.create(username='Александр Пушкин')
