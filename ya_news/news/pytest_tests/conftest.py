@@ -4,17 +4,16 @@ import pytest
 from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
+from django.test import Client
 
 from news.models import News, Comment
 
 
 @pytest.fixture
 def news():
-    news = News.objects.create(
+    return News.objects.create(
         title='Заголовок',
-        text='Текст',
-    )
-    return news
+        text='Текст',)
 
 
 @pytest.fixture
@@ -28,19 +27,18 @@ def author(django_user_model):
 
 
 @pytest.fixture
-def author_client(author, client):
+def author_client(author):
+    client = Client()
     client.force_login(author)
     return client
 
 
 @pytest.fixture
 def comment(author, news):
-    comment = Comment.objects.create(
+    return Comment.objects.create(
         text='Текст комментария',
         author=author,
-        news=news
-    )
-    return comment
+        news=news)
 
 
 @pytest.fixture
@@ -60,7 +58,6 @@ def all_news():
         for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
     ]
     News.objects.bulk_create(all_news)
-    return all_news
 
 
 @pytest.fixture
@@ -71,7 +68,7 @@ def detail_url(news_id, news):
 @pytest.fixture
 def comment_list(news, author):
     now = timezone.now()
-    for index in range(2):
+    for index in range(10):
         comment = Comment.objects.create(
             news=news, author=author, text=f'Tекст {index}',
         )
@@ -81,15 +78,12 @@ def comment_list(news, author):
 
 @pytest.fixture
 def form_data():
-    form_data = {'text': 'Текст комментария'}
-    form_data = {'text': 'Обновлённый комментарий'}
-    return form_data
+    return {'text': 'Обновлённый комментарий'}
 
 
 @pytest.fixture
 def url_to_comments(detail_url):
-    url_to_comments = detail_url + '#comments'
-    return url_to_comments
+    return detail_url + '#comments'
 
 
 @pytest.fixture

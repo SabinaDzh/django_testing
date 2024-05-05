@@ -31,11 +31,17 @@ class TestNoteCreation(TestCase):
         cls.notes_add = 'notes:add'
 
     def test_user_can_create_note(self):
+        """
+        Тест проверяет, что авторизированный пользователь
+        может создать заметку
+        """
+        Note.objects.all().delete()
+        expected_count = Note.objects.count() + 1
         url = reverse(self.notes_add)
         response = self.author_client.post(url, data=self.form_data)
         self.assertRedirects(response, reverse('notes:success'))
         all_notes = Note.objects.count()
-        self.assertEqual(all_notes, 2)
+        self.assertEqual(all_notes, expected_count)
         new_note = Note.objects.last()
         self.assertEqual(new_note.title, self.form_data['title'])
         self.assertEqual(new_note.text, self.form_data['text'])
@@ -43,6 +49,10 @@ class TestNoteCreation(TestCase):
         self.assertEqual(new_note.author, self.author)
 
     def test_anonymous_user_cant_create_note(self):
+        """
+        Тест проверяет, что анонимный пользователь
+        не может создать заметку
+        """
         all_notes = Note.objects.count()
         url = reverse(self.notes_add)
         response = self.client.post(url, data=self.form_data)
@@ -52,23 +62,25 @@ class TestNoteCreation(TestCase):
         self.assertEqual(Note.objects.count(), all_notes)
 
     def test_not_unique_slug(self):
+        """Тест проверяет отсутствие двух заметок с одинаковым слагом"""
         all_notes = Note.objects.count()
         url = reverse('notes:add')
         self.form_data['slug'] = self.note.slug
         response = self.author_client.post(url, data=self.form_data)
-        self.assertFormError(response,
-                             'form',
-                             'slug',
-                             errors=(self.note.slug + WARNING))
+        self.assertFormError(
+            response, 'form', 'slug', errors=(self.note.slug + WARNING))
         self.assertEqual(Note.objects.count(), all_notes)
 
     def test_empty_slug(self):
+        """Тест проверяет отсутствие пустого слага"""
         Note.objects.all().delete()
+        expected_count = Note.objects.count() + 1
         url = reverse(self.notes_add)
         self.form_data.pop('slug')
         response = self.author_client.post(url, data=self.form_data)
         self.assertRedirects(response, reverse('notes:success'))
-        assert Note.objects.count() == 1
+        after_operation_count = Note.objects.count()
+        self.assertEqual(after_operation_count, expected_count)
         new_note = Note.objects.last()
         expected_slug = slugify(self.form_data['title'])
         self.assertEqual(new_note.slug, expected_slug)
@@ -95,6 +107,7 @@ class TestNoteEditDeleteAndSlug(TestCase):
                          'slug': 'note-slug-new'}
 
     def test_author_can_edit_note(self):
+        """Тест проверяет возможность автора изменять заметку"""
         url = reverse('notes:edit', args=(self.note.slug,))
         response = self.author_client.post(url, self.form_data)
         self.assertRedirects(response, reverse('notes:success'))
@@ -104,6 +117,10 @@ class TestNoteEditDeleteAndSlug(TestCase):
         self.assertEqual(self.note.slug, self.form_data['slug'])
 
     def test_other_user_cant_edit_note(self):
+        """
+        Тест проверяет возможность изменять чужую заметку
+        другим пользователем
+        """
         url = reverse('notes:edit', args=(self.note.slug,))
         response = self.auth_reader.post(url, self.form_data)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
@@ -113,12 +130,17 @@ class TestNoteEditDeleteAndSlug(TestCase):
         self.assertEqual(self.note.slug, note_from_db.slug)
 
     def test_author_can_delete_note(self):
+        """Тест проверяет возможность удаление заметки автором"""
         url = reverse('notes:delete', args=(self.note.slug,))
         response = self.author_client.post(url)
         self.assertRedirects(response, reverse('notes:success'))
         self.assertEqual(Note.objects.count(), 0)
 
     def test_other_user_cant_delete_note(self):
+        """
+        Тест проверяет возможность удаления
+        чужой заметки другим пользователем
+        """
         all_notes = Note.objects.count()
         url = reverse('notes:delete', args=(self.note.slug,))
         response = self.auth_reader.post(url)

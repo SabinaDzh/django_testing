@@ -2,8 +2,8 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.test import TestCase, Client
 
-
 from notes.models import Note
+from notes.forms import NoteForm
 
 User = get_user_model()
 
@@ -26,6 +26,7 @@ class TestHomePage(TestCase):
         cls.auth_reader.force_login(cls.reader)
 
     def test_pages_contains_form(self):
+        """Тест проверяет наличие формы для создания заметки"""
         urls = (
             ('notes:add', None),
             ('notes:edit', (self.note.slug,))
@@ -35,15 +36,17 @@ class TestHomePage(TestCase):
                 url = reverse(name, args=args)
                 response = self.auth_client.get(url)
                 self.assertIn('form', response.context)
+                self.assertIsInstance(response.context['form'], NoteForm)
 
     def test_note_not_in_list_for_another_user(self):
-        url = reverse('notes:list')
-        response = self.auth_reader.get(url)
-        object_list = response.context.get('object_list')
-        self.assertNotIn(self.note, object_list)
-
-    def test_note_in_list_for_author(self):
-        url = reverse('notes:list')
-        response = self.auth_client.get(url)
-        object_list = response.context.get('object_list')
-        self.assertIn(self.note, object_list)
+        """Тест проверяет наличие заметки для разных пользователей"""
+        urls = (
+            (self.auth_client, True),
+            (self.auth_reader, False)
+        )
+        for name, args in urls:
+            with self.subTest(name=name, args=args):
+                url = reverse('notes:list')
+                response = name.get(url)
+                object_list = response.context.get('object_list')
+                self.assertEqual((self.note in object_list), args)

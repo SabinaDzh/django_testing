@@ -1,4 +1,5 @@
 from http import HTTPStatus
+
 import pytest
 from django.urls import reverse
 from pytest_django.asserts import assertRedirects
@@ -16,6 +17,7 @@ from pytest_django.asserts import assertRedirects
     ),
 )
 def test_pages_availability(client, name, args):
+    """Тест проверяет доступность основных страниц и страниц авторизации"""
     url = reverse(name, args=args)
     response = client.get(url)
     assert response.status_code == HTTPStatus.OK
@@ -35,6 +37,10 @@ def test_pages_availability(client, name, args):
 def test_comment_edit_and_delete_for_different_users(
         parametrized_client, name, comment_id, expected_status
 ):
+    """
+    Тест проверяет, что разные пользователи
+    могут изменять и удалять комментарии
+    """
     url = reverse(name, args=comment_id)
     response = parametrized_client.get(url)
     assert response.status_code == expected_status
@@ -45,6 +51,10 @@ def test_comment_edit_and_delete_for_different_users(
     ('news:edit', 'news:delete'),
 )
 def test_redirects(client, name, comment_id):
+    """
+    Тест на переадресацию, на страницу авторизации,
+    для анонимного пользователя
+    """
     login_url = reverse('users:login')
     url = reverse(name, args=comment_id)
     expected_url = f'{login_url}?next={url}'
