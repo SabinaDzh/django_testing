@@ -44,9 +44,12 @@ class TestHomePage(TestCase):
             (self.auth_client, True),
             (self.auth_reader, False)
         )
-        for name, args in urls:
-            with self.subTest(name=name, args=args):
+        for user_status, note_in_list in urls:
+            with self.subTest(
+                user_status=user_status,
+                note_in_list=note_in_list
+            ):
                 url = reverse('notes:list')
-                response = name.get(url)
+                response = user_status.get(url)
                 object_list = response.context.get('object_list')
-                self.assertEqual((self.note in object_list), args)
+                self.assertEqual((self.note in object_list), note_in_list)

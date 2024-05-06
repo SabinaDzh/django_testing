@@ -48,6 +48,5 @@ def test_authorized_client_has_form(author_client, detail_url):
     """Тест проверяет наличие формы для авторизованного пользователя"""
     response = author_client.get(detail_url)
     assert 'form' in response.context
-    if 'form' in response.context:
-        form = response.context['form']
-        assert isinstance(form, CommentForm)
+    form = response.context['form']
+    assert isinstance(form, CommentForm)

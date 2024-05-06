@@ -36,12 +36,11 @@ class TestNoteCreation(TestCase):
         может создать заметку
         """
         Note.objects.all().delete()
-        expected_count = Note.objects.count() + 1
         url = reverse(self.notes_add)
         response = self.author_client.post(url, data=self.form_data)
         self.assertRedirects(response, reverse('notes:success'))
         all_notes = Note.objects.count()
-        self.assertEqual(all_notes, expected_count)
+        self.assertEqual(all_notes, 1)
         new_note = Note.objects.last()
         self.assertEqual(new_note.title, self.form_data['title'])
         self.assertEqual(new_note.text, self.form_data['text'])
@@ -74,13 +73,12 @@ class TestNoteCreation(TestCase):
     def test_empty_slug(self):
         """Тест проверяет отсутствие пустого слага"""
         Note.objects.all().delete()
-        expected_count = Note.objects.count() + 1
         url = reverse(self.notes_add)
         self.form_data.pop('slug')
         response = self.author_client.post(url, data=self.form_data)
         self.assertRedirects(response, reverse('notes:success'))
         after_operation_count = Note.objects.count()
-        self.assertEqual(after_operation_count, expected_count)
+        self.assertEqual(after_operation_count, 1)
         new_note = Note.objects.last()
         expected_slug = slugify(self.form_data['title'])
         self.assertEqual(new_note.slug, expected_slug)
